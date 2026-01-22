@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+/* Jika Anda masih menggunakan versi 3, gunakan ini: */
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities;
+*/
+
+:root {
+  background-color: #F8FAFC;
+  color: #111827;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
