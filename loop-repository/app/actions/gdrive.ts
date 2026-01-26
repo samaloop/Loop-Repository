@@ -2,30 +2,11 @@
 'use server'
 import { google } from 'googleapis';
 import { supabase } from '@/lib/supabase';
-import { Readable } from 'stream'; // 
+import { Readable } from 'stream'; 
+import { revalidatePath } from 'next/cache';
 
 const SCOPES = ['https://www.googleapis.com/auth/drive.file'];
 
-// async function getDriveService() {
-//   try {
-//     const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY!);
-
-//     // Perbaikan khusus untuk private_key jika ada error format \n
-//     if (credentials.private_key) {
-//       credentials.private_key = credentials.private_key.replace(/\\n/g, '\n');
-//     }
-
-//     const auth = new google.auth.GoogleAuth({
-//       credentials,
-//       scopes: ['https://www.googleapis.com/auth/drive.file'],
-//     });
-
-//     return google.drive({ version: 'v3', auth });
-//   } catch (error) {
-//     console.error("Gagal inisialisasi Google Drive Service:", error);
-//     throw new Error("Internal Server Error: Drive Auth Failed");
-//   }
-// }
 
 async function getDriveService() {
   const oauth2Client = new google.auth.OAuth2(
@@ -97,71 +78,181 @@ async function getDriveService() {
 // }
 
 
+// export async function uploadToDrive(formData: FormData, programId: string, category: string) {
+//   try {
+//     const file = formData.get('file') as File;
+//     const drive = await getDriveService();
+//     const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+
+//     // DEBUG: Cek di terminal VS Code apakah ID ini muncul
+//     console.log("Memulai upload ke Folder ID:", folderId);
+
+//     if (!folderId) throw new Error("GOOGLE_DRIVE_FOLDER_ID tidak ditemukan di .env");
+
+//     const buffer = Buffer.from(await file.arrayBuffer());
+//     const mediaStream = Readable.from(buffer);
+
+//     const fileMetadata = {
+//       name: file.name,
+//       parents: [folderId], // Pastikan ini adalah array
+//     };
+
+//     const media = {
+//       mimeType: file.type,
+//       body: mediaStream,
+//     };
+
+//     const gdriveResponse = await drive.files.create({
+//       requestBody: fileMetadata,
+//       media: media,
+//       fields: 'id, webViewLink, webContentLink',
+//     });
+
+//     const { id: gFileId, webViewLink, webContentLink } = gdriveResponse.data;
+
+//     // Simpan ke Supabase (Gunakan 'await' karena programId dikirim dari params)
+//     const { data, error: sbError } = await supabase.from('File').insert({
+//       program_id: programId,
+//       gdrive_id: gFileId,
+//       view_link: webViewLink,
+//       download_link: webContentLink,
+//       category: category,
+//       name: file.name,
+//       status: 'active'
+//     }).select().single();
+
+//     if (!sbError) {
+//     revalidatePath(`/program/${programId}`);
+//     return { success: true, data };
+//   }
+
+//     return { success: true, data };
+
+//   } catch (error: any) {
+//     console.error("Kesalahan Upload:", error.message);
+//     return { success: false, error: error.message };
+//   }
+// }
+
 export async function uploadToDrive(formData: FormData, programId: string, category: string) {
   try {
     const file = formData.get('file') as File;
+    const customName = formData.get('displayName') as string; // Ambil nama dari input baru
     const drive = await getDriveService();
-    const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
-
-    // DEBUG: Cek di terminal VS Code apakah ID ini muncul
-    console.log("Memulai upload ke Folder ID:", folderId);
-
-    if (!folderId) throw new Error("GOOGLE_DRIVE_FOLDER_ID tidak ditemukan di .env");
+    
+    // Gunakan customName jika ada, jika tidak gunakan file.name asli
+    const finalName = customName || file.name;
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const mediaStream = Readable.from(buffer);
 
     const fileMetadata = {
-      name: file.name,
-      parents: [folderId], // Pastikan ini adalah array
-    };
-
-    const media = {
-      mimeType: file.type,
-      body: mediaStream,
+      name: finalName, // Nama di Google Drive akan mengikuti input user
+      parents: [process.env.GOOGLE_DRIVE_FOLDER_ID!],
     };
 
     const gdriveResponse = await drive.files.create({
       requestBody: fileMetadata,
-      media: media,
+      media: { mimeType: file.type, body: mediaStream },
       fields: 'id, webViewLink, webContentLink',
     });
 
     const { id: gFileId, webViewLink, webContentLink } = gdriveResponse.data;
 
-    // Simpan ke Supabase (Gunakan 'await' karena programId dikirim dari params)
     const { data, error: sbError } = await supabase.from('File').insert({
       program_id: programId,
       gdrive_id: gFileId,
       view_link: webViewLink,
       download_link: webContentLink,
       category: category,
-      name: file.name,
+      name: finalName, // Simpan nama kustom ke database
       status: 'active'
     }).select().single();
 
-    if (sbError) throw sbError;
-
+    revalidatePath(`/program/${programId}`);
     return { success: true, data };
-
   } catch (error: any) {
-    console.error("Kesalahan Upload:", error.message);
     return { success: false, error: error.message };
   }
 }
-export async function deleteFile(fileId: number, gdriveId: string) {
-  const drive = await getDriveService();
 
-  // 1. Hapus dari Google Drive
+export async function deleteFile(fileId: number, gdriveId: string, programId: string) {
   try {
-    await drive.files.delete({ fileId: gdriveId });
-  } catch (err) {
-    console.error("Gagal hapus di Drive (mungkin sudah terhapus)", err);
+    const drive = await getDriveService();
+
+    // 1. Hapus file dari Google Drive
+    try {
+      await drive.files.delete({
+        fileId: gdriveId,
+      });
+      console.log(`File GDrive ${gdriveId} berhasil dihapus.`);
+    } catch (gError: any) {
+      // Jika file sudah dihapus manual di Drive, abaikan error 404
+      if (gError.code !== 404) throw gError;
+    }
+
+    // 2. Hapus data dari Supabase
+    const { error: sbError } = await supabase
+      .from('File')
+      .delete()
+      .eq('id', fileId);
+
+    if (sbError) throw sbError;
+
+    // 3. Update tampilan secara realtime
+    revalidatePath(`/program/${programId}`);
+    
+    return { success: true };
+  } catch (error: any) {
+    console.error("Kesalahan Hapus:", error.message);
+    return { success: false, error: error.message };
   }
+}
+// app/actions/gdrive.ts
 
-  // 2. Hapus dari Supabase
-  const { error } = await supabase.from('File').delete().eq('id', fileId);
+export async function updateFile(
+  fileId: number,          // ID di database Supabase
+  gdriveId: string,        // ID di Google Drive
+  formData: FormData, 
+  programId: string
+) {
+  try {
+    const drive = await getDriveService();
+    const newFile = formData.get('file') as File;
+    const newName = formData.get('displayName') as string;
+    const category = formData.get('category') as string;
 
-  if (error) throw error;
-  return { success: true };
+    const updateData: any = {
+      name: newName,
+      category: category,
+    };
+
+    // 1. Jika ada file baru yang diunggah, update konten di Google Drive
+    if (newFile && newFile.size > 0) {
+      const buffer = Buffer.from(await newFile.arrayBuffer());
+      await drive.files.update({
+        fileId: gdriveId,
+        media: { mimeType: newFile.type, body: Readable.from(buffer) },
+      });
+    }
+
+    // 2. Update Nama di Google Drive
+    await drive.files.update({
+      fileId: gdriveId,
+      requestBody: { name: newName },
+    });
+
+    // 3. Update data di Supabase
+    const { error } = await supabase
+      .from('File')
+      .update(updateData)
+      .eq('id', fileId);
+
+    if (error) throw error;
+
+    revalidatePath(`/program/${programId}`);
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
 }
