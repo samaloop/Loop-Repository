@@ -2,7 +2,7 @@
 import { logout } from '@/app/auth/actions';
 import { createClient } from '@/utils/supabase/server';
 import Link from 'next/link'; //
-import { Home } from 'lucide-react'; // Menggunakan Lucide untuk konsistensi ikon
+import { Home, Users } from 'lucide-react'; // Menggunakan Lucide untuk konsistensi ikon
 
 export default async function MainHeader() {
   const supabase = await createClient();
@@ -18,6 +18,7 @@ export default async function MainHeader() {
 
   const userName = user.email?.split('@')[0] || 'User';
   const role = userData?.role || 'No Role';
+  const canAccessSales = role === 'admin' || role === 'sales';
 
   return (
     <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
@@ -52,6 +53,19 @@ export default async function MainHeader() {
             </div>
             <span className="hidden sm:inline">Home</span>
           </Link>
+
+          {/* SHORTCUT SALES & MARKETING (khusus admin/sales) */}
+          {canAccessSales && (
+            <Link
+              href="/sales"
+              className="flex items-center gap-2 text-slate-500 hover:text-cyan-600 transition-all font-bold text-sm group"
+            >
+              <div className="p-2 bg-slate-50 group-hover:bg-cyan-50 rounded-xl transition-colors">
+                <Users size={18} strokeWidth={2.5} />
+              </div>
+              <span className="hidden sm:inline">Sales & Marketing</span>
+            </Link>
+          )}
 
           {/* TOMBOL LOGOUT */}
           <form action={logout}>
