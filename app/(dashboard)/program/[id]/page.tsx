@@ -25,7 +25,7 @@ export default async function ProgramDetailPage({ params }: { params: { id: stri
     <div className="min-h-screen bg-[#F8FAFC]">
       {/* HEADER & NAVIGASI: Lebih bersih dan responsif */}
       <nav className="max-w-6xl mx-auto px-4 md:px-6 py-6 flex items-center gap-2 text-xs md:text-sm">
-        <Link href="/dashboard" className="text-slate-400 hover:text-cyan-600 transition-colors">Dashboard</Link>
+        <Link href="/repository" className="text-slate-400 hover:text-cyan-600 transition-colors">Repository</Link>
         <span className="text-slate-300">/</span>
         <span className="text-slate-800 font-bold truncate">{program?.name}</span>
       </nav>

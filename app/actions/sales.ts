@@ -2,23 +2,8 @@
 
 import * as XLSX from 'xlsx';
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/utils/supabase/server';
 import { CLIENT_FIELDS, PAYMENT_STATUS_OPTIONS, mapExcelHeaderToKey } from '@/lib/clientFields';
-
-async function getAuthorizedContext() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { supabase, authorized: false as const };
-
-  const { data: userData } = await supabase
-    .from('User')
-    .select('id, role')
-    .eq('auth_id', user.id)
-    .single();
-
-  const authorized = userData?.role === 'admin' || userData?.role === 'sales';
-  return { supabase, authorized, picUserId: userData?.id ?? null };
-}
+import { getAuthorizedSalesContext as getAuthorizedContext } from '@/lib/serverAuth';
 
 // Excel/Google Forms biasanya menyimpan tanggal sebagai teks "DD/MM/YYYY" (format Indonesia),
 // sedangkan Postgres default menafsirkan "14/03/1990" sebagai MM/DD/YYYY dan menolaknya
