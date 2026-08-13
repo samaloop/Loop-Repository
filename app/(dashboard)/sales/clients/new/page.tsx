@@ -3,7 +3,8 @@ import ClientForm from '@/components/sales/ClientForm';
 import { requireSalesAccess } from '@/lib/salesAccess';
 
 export default async function NewClientPage() {
-  await requireSalesAccess();
+  const { supabase } = await requireSalesAccess();
+  const { data: companies } = await supabase.from('Company').select('id, company_name').order('company_name');
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -17,7 +18,7 @@ export default async function NewClientPage() {
         <h1 className="text-2xl md:text-3xl font-black text-slate-800 mb-8">Tambah Peserta Baru</h1>
 
         <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-6 md:p-10">
-          <ClientForm mode="create" />
+          <ClientForm mode="create" companyOptions={companies || []} />
         </div>
       </div>
     </div>

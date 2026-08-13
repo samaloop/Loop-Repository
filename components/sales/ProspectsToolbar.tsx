@@ -3,9 +3,9 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Upload, Plus } from 'lucide-react';
 import ExcelUploadModal from './ExcelUploadModal';
-import { importClientsFromExcel } from '@/app/actions/sales';
+import { importProspectsFromExcel } from '@/app/actions/prospects';
 
-export default function ClientsToolbar() {
+export default function ProspectsToolbar() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
 
   return (
@@ -18,7 +18,7 @@ export default function ClientsToolbar() {
           <Upload size={16} /> Upload Excel
         </button>
         <Link
-          href="/sales/clients/new"
+          href="/sales/prospects/new"
           className="flex items-center justify-center gap-2 bg-cyan-600 hover:bg-slate-900 text-white px-6 py-3.5 rounded-2xl font-bold text-sm shadow-lg shadow-cyan-100 transition-all"
         >
           <Plus size={16} /> Tambah Manual
@@ -28,8 +28,8 @@ export default function ClientsToolbar() {
       <ExcelUploadModal
         isOpen={isUploadOpen}
         onClose={() => setIsUploadOpen(false)}
-        title="Upload Excel Peserta"
-        importAction={importClientsFromExcel}
+        title="Upload Excel Calon Client"
+        importAction={importProspectsFromExcel}
       />
     </>
   );

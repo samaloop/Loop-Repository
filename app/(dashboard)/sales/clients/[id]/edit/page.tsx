@@ -7,7 +7,10 @@ export default async function EditClientPage({ params }: { params: { id: string 
   const { id } = await params;
   const { supabase } = await requireSalesAccess();
 
-  const { data: client } = await supabase.from('Client').select('*').eq('id', id).single();
+  const [{ data: client }, { data: companies }] = await Promise.all([
+    supabase.from('Client').select('*').eq('id', id).single(),
+    supabase.from('Company').select('id, company_name').order('company_name'),
+  ]);
   if (!client) notFound();
 
   return (
@@ -24,7 +27,7 @@ export default async function EditClientPage({ params }: { params: { id: string 
         <h1 className="text-2xl md:text-3xl font-black text-slate-800 mb-8">Edit Data Peserta</h1>
 
         <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-6 md:p-10">
-          <ClientForm mode="edit" clientId={client.id} defaultValues={client} />
+          <ClientForm mode="edit" clientId={client.id} defaultValues={client} companyOptions={companies || []} />
         </div>
       </div>
     </div>

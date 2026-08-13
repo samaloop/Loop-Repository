@@ -4,36 +4,22 @@ import * as XLSX from 'xlsx';
 import { revalidatePath } from 'next/cache';
 import { CLIENT_FIELDS, PAYMENT_STATUS_OPTIONS, mapExcelHeaderToKey } from '@/lib/clientFields';
 import { getAuthorizedSalesContext as getAuthorizedContext } from '@/lib/serverAuth';
-
-// Excel/Google Forms biasanya menyimpan tanggal sebagai teks "DD/MM/YYYY" (format Indonesia),
-// sedangkan Postgres default menafsirkan "14/03/1990" sebagai MM/DD/YYYY dan menolaknya
-// (bulan 14 tidak valid). Normalisasi ke ISO yyyy-mm-dd sebelum insert.
-function parseDateValue(value: string): string | null {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-
-  const isoMatch = trimmed.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
-
-  const dmyMatch = trimmed.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-  if (dmyMatch) {
-    const [, d, m, y] = dmyMatch;
-    return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-  }
-
-  return null;
-}
+import { parseDateValue } from '@/lib/dateUtils';
 
 function extractClientData(formData: FormData) {
-  const data: Record<string, string | null> = {};
+  const data: Record<string, string | number | null> = {};
   for (const field of CLIENT_FIELDS) {
     const raw = formData.get(field.key);
     const value = typeof raw === 'string' ? raw.trim() : '';
     data[field.key] = value === '' ? null : value;
   }
-  if (!data.payment_status || !PAYMENT_STATUS_OPTIONS.includes(data.payment_status)) {
+  if (!data.payment_status || !PAYMENT_STATUS_OPTIONS.includes(data.payment_status as string)) {
     data.payment_status = 'Lunas';
   }
+
+  const companyIdRaw = (formData.get('company_id') as string || '').trim();
+  data.company_id = companyIdRaw === '' ? null : Number(companyIdRaw);
+
   return data;
 }
 

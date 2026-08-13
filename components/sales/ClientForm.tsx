@@ -5,13 +5,19 @@ import { Loader2 } from 'lucide-react';
 import { createClientRecord, updateClientRecord } from '@/app/actions/sales';
 import { CLIENT_FIELDS, CLIENT_FIELD_SECTIONS, type ClientRecord } from '@/lib/clientFields';
 
+interface CompanyOption {
+  id: number;
+  company_name: string;
+}
+
 interface ClientFormProps {
   mode: 'create' | 'edit';
   clientId?: number;
   defaultValues?: ClientRecord;
+  companyOptions: CompanyOption[];
 }
 
-export default function ClientForm({ mode, clientId, defaultValues }: ClientFormProps) {
+export default function ClientForm({ mode, clientId, defaultValues, companyOptions }: ClientFormProps) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +78,7 @@ export default function ClientForm({ mode, clientId, defaultValues }: ClientForm
                       required={field.required}
                       className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-cyan-500 outline-none appearance-none font-medium"
                     >
+                      {!field.required && <option value="">-</option>}
                       {field.options?.map((opt) => (
                         <option key={opt} value={opt}>{opt}</option>
                       ))}
@@ -89,6 +96,25 @@ export default function ClientForm({ mode, clientId, defaultValues }: ClientForm
               );
             })}
           </div>
+
+          {section === 'Data Perusahaan' && (
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">
+                Perusahaan Terdaftar (opsional)
+              </label>
+              <select
+                name="company_id"
+                defaultValue={defaultValues?.company_id ?? ''}
+                className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-cyan-500 outline-none appearance-none font-medium"
+              >
+                <option value="">Tidak ada</option>
+                {companyOptions.map((c) => (
+                  <option key={c.id} value={c.id}>{c.company_name}</option>
+                ))}
+              </select>
+              <p className="text-[11px] text-slate-400 mt-1.5 px-1">Kaitkan peserta ini ke salah satu perusahaan terdaftar di modul Perusahaan & Proposal.</p>
+            </div>
+          )}
         </div>
       ))}
 

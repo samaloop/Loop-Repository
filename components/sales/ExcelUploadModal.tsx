@@ -2,12 +2,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, Upload, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
-import { importClientsFromExcel } from '@/app/actions/sales';
-
-interface ExcelUploadModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
 
 interface ImportResult {
   success: boolean;
@@ -16,7 +10,14 @@ interface ImportResult {
   errors: string[];
 }
 
-export default function ExcelUploadModal({ isOpen, onClose }: ExcelUploadModalProps) {
+interface ExcelUploadModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  importAction: (formData: FormData) => Promise<ImportResult>;
+}
+
+export default function ExcelUploadModal({ isOpen, onClose, title, importAction }: ExcelUploadModalProps) {
   const router = useRouter();
   const [isUploading, setIsUploading] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -43,7 +44,7 @@ export default function ExcelUploadModal({ isOpen, onClose }: ExcelUploadModalPr
     setIsUploading(true);
     setResult(null);
     try {
-      const res = await importClientsFromExcel(formData);
+      const res = await importAction(formData);
       setResult(res);
       if (res.success) router.refresh();
     } catch (error) {
@@ -58,7 +59,7 @@ export default function ExcelUploadModal({ isOpen, onClose }: ExcelUploadModalPr
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white rounded-[2rem] w-full max-w-lg p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-black text-gray-800 tracking-tight">Upload Excel Peserta</h2>
+          <h2 className="text-2xl font-black text-gray-800 tracking-tight">{title}</h2>
           <button onClick={handleClose} disabled={isUploading} className="p-2 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50">
             <X size={24} className="text-gray-500" />
           </button>

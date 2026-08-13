@@ -15,11 +15,12 @@ export interface ClientFieldDef {
 }
 
 export const PAYMENT_STATUS_OPTIONS = ['Lunas', 'Pembayaran Bertahap'];
+export const GENDER_OPTIONS = ['Laki-laki', 'Perempuan'];
 
 export const CLIENT_FIELDS: ClientFieldDef[] = [
   { key: 'full_name', label: 'Nama Lengkap', type: 'text', section: 'Data Pribadi', required: true },
   { key: 'nickname', label: 'Nama Panggilan', type: 'text', section: 'Data Pribadi' },
-  { key: 'gender', label: 'Jenis Kelamin', type: 'text', section: 'Data Pribadi' },
+  { key: 'gender', label: 'Jenis Kelamin', type: 'select', section: 'Data Pribadi', options: GENDER_OPTIONS },
   { key: 'date_of_birth', label: 'Tanggal Lahir', type: 'date', section: 'Data Pribadi' },
   { key: 'home_address', label: 'Alamat Rumah', type: 'textarea', section: 'Data Pribadi' },
   { key: 'phone', label: 'Nomor Telepon', type: 'tel', section: 'Data Pribadi' },
@@ -59,6 +60,7 @@ export interface ClientRecord {
   alt_email: string | null;
   education_background: string | null;
   company: string | null;
+  company_id: number | null;
   job_title: string | null;
   company_address: string | null;
   certification_program: string | null;

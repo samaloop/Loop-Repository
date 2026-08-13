@@ -11,6 +11,10 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
   const { data: client } = await supabase.from('Client').select('*').eq('id', id).single();
   if (!client) notFound();
 
+  const { data: company } = client.company_id
+    ? await supabase.from('Company').select('id, company_name').eq('id', client.company_id).single()
+    : { data: null };
+
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
       <div className="max-w-4xl mx-auto px-4 md:px-6 py-8 md:py-10">
@@ -55,6 +59,18 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
                     <p className="text-slate-700 font-medium whitespace-pre-wrap">{client[field.key] || '-'}</p>
                   </div>
                 ))}
+                {section === 'Data Perusahaan' && (
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Perusahaan Terdaftar</p>
+                    {company ? (
+                      <Link href={`/sales/companies/${company.id}`} className="text-cyan-600 font-medium hover:underline">
+                        {company.company_name}
+                      </Link>
+                    ) : (
+                      <p className="text-slate-700 font-medium">-</p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           ))}

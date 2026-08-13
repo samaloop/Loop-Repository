@@ -1,20 +1,22 @@
 import Link from 'next/link';
-import { Users, ArrowRight, ClipboardList } from 'lucide-react';
+import { Users, ArrowRight, ClipboardList, Building2, UserSearch, CalendarDays } from 'lucide-react';
 import { requireSalesAccess } from '@/lib/salesAccess';
 
 export default async function SalesPage() {
   const { supabase } = await requireSalesAccess();
 
-  const { data: clients } = await supabase.from('Client').select('payment_status');
-
-  const total = clients?.length ?? 0;
-  const lunas = clients?.filter((c) => c.payment_status === 'Lunas').length ?? 0;
-  const bertahap = total - lunas;
+  const [{ count: clientCount }, { count: companyCount }, { count: proposalCount }, { count: prospectCount }] = await Promise.all([
+    supabase.from('Client').select('*', { count: 'exact', head: true }),
+    supabase.from('Company').select('*', { count: 'exact', head: true }),
+    supabase.from('Proposal').select('*', { count: 'exact', head: true }),
+    supabase.from('Prospect').select('*', { count: 'exact', head: true }),
+  ]);
 
   const stats = [
-    { label: 'Total Peserta', value: total },
-    { label: 'Lunas', value: lunas },
-    { label: 'Pembayaran Bertahap', value: bertahap },
+    { label: 'Total Peserta', value: clientCount ?? 0 },
+    { label: 'Perusahaan', value: companyCount ?? 0 },
+    { label: 'Proposal', value: proposalCount ?? 0 },
+    { label: 'Calon Client', value: prospectCount ?? 0 },
   ];
 
   const menuItems = [
@@ -30,6 +32,24 @@ export default async function SalesPage() {
       title: 'Weekly Relationship Report',
       description: 'Laporan mingguan, rekap bulanan, & team review.',
     },
+    {
+      href: '/sales/companies',
+      icon: Building2,
+      title: 'Perusahaan & Proposal',
+      description: 'Company terdaftar & proposal corporate.',
+    },
+    {
+      href: '/sales/prospects',
+      icon: UserSearch,
+      title: 'Calon Client (Prospek)',
+      description: 'Lead pra-registrasi berdasarkan Kategori-Ring.',
+    },
+    {
+      href: '/sales/community-programs',
+      icon: CalendarDays,
+      title: 'Program Komunitas',
+      description: 'Seminar/webinar komunitas & peserta terkait.',
+    },
   ];
 
   return (
@@ -42,7 +62,7 @@ export default async function SalesPage() {
           <h1 className="text-lg md:text-xl font-black text-slate-800">Data Peserta & Klien</h1>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 md:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 md:gap-4">
           {stats.map((stat) => (
             <div key={stat.label} className="bg-white rounded-2xl p-4 md:p-5 border border-slate-100 shadow-sm text-center">
               <p className="text-xl md:text-2xl font-black text-slate-800">{stat.value}</p>
@@ -51,7 +71,7 @@ export default async function SalesPage() {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
           {menuItems.map((item) => (
             <Link
               key={item.href}
