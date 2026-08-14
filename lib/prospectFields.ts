@@ -5,6 +5,11 @@ export const RING_OPTIONS = ['Ring 1 - Hot Prospek', 'Ring 2 - Warm Prospek', 'R
 
 export type Ring = typeof RING_OPTIONS[number];
 
+// Menandai apakah prospect ini yang menghubungi kita duluan (Leads) atau hasil
+// dicari/dikejar tim sales dari database (Hunter). Varchar biasa (bukan enum DB)
+// supaya gampang ditambah pilihan lain nanti tanpa migrasi tipe kolom.
+export const CONTACT_TYPE_OPTIONS = ['Leads', 'Hunter'] as const;
+
 export interface ProspectRecord {
   id: number;
   full_name: string;
@@ -16,6 +21,7 @@ export interface ProspectRecord {
   email: string | null;
   source: string | null;
   ring: string;
+  contact_type: string | null;
   interested_program: string | null;
   year: number | null;
   age: number | null;
@@ -63,6 +69,8 @@ const EXCEL_HEADER_MAP: Record<string, string> = {
   'kategori-ring': 'ring',
   'kategori ring': 'ring',
   'kategori prospek': 'ring',
+  'jenis kontak': 'contact_type',
+  'leads/hunter': 'contact_type',
   'tertarik program apa': 'interested_program',
   'program yang ditawarkan': 'interested_program',
   'tahun': 'year',

@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { createProspect, updateProspect } from '@/app/actions/prospects';
-import { RING_OPTIONS, type ProspectRecord } from '@/lib/prospectFields';
+import { RING_OPTIONS, CONTACT_TYPE_OPTIONS, type ProspectRecord } from '@/lib/prospectFields';
 import { GENDER_OPTIONS } from '@/lib/clientFields';
 
 interface CompanyOption {
@@ -17,12 +17,18 @@ interface ProspectFormProps {
   defaultValues?: ProspectRecord;
   defaultCompanyId?: number;
   companyOptions: CompanyOption[];
+  industrySectorOptions: string[];
 }
 
-export default function ProspectForm({ mode, prospectId, defaultValues, defaultCompanyId, companyOptions }: ProspectFormProps) {
+export default function ProspectForm({ mode, prospectId, defaultValues, defaultCompanyId, companyOptions, industrySectorOptions }: ProspectFormProps) {
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const currentIndustrySector = defaultValues?.industry_sector || '';
+  const industrySectorSelectOptions = currentIndustrySector && !industrySectorOptions.includes(currentIndustrySector)
+    ? [currentIndustrySector, ...industrySectorOptions]
+    : industrySectorOptions;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -108,6 +114,15 @@ export default function ProspectForm({ mode, prospectId, defaultValues, defaultC
             ))}
           </select>
         </div>
+        <div>
+          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Jenis Kontak</label>
+          <select name="contact_type" defaultValue={defaultValues?.contact_type || ''} className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-cyan-500 outline-none appearance-none font-medium">
+            <option value="">-</option>
+            {CONTACT_TYPE_OPTIONS.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </div>
         <div className="md:col-span-2">
           <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Tertarik Program Apa</label>
           <input type="text" name="interested_program" defaultValue={defaultValues?.interested_program || ''} className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-cyan-500 outline-none font-medium" />
@@ -126,7 +141,12 @@ export default function ProspectForm({ mode, prospectId, defaultValues, defaultC
         </div>
         <div>
           <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Sektor Industri</label>
-          <input type="text" name="industry_sector" defaultValue={defaultValues?.industry_sector || ''} className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-cyan-500 outline-none font-medium" />
+          <select name="industry_sector" defaultValue={currentIndustrySector} className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-cyan-500 outline-none appearance-none font-medium">
+            <option value="">-</option>
+            {industrySectorSelectOptions.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
         </div>
       </div>
 

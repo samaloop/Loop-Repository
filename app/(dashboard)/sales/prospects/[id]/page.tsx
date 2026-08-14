@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { requireSalesAccess } from '@/lib/salesAccess';
 import { ringBadgeClass } from '@/lib/prospectFields';
 import DeleteProspectButton from '@/components/sales/DeleteProspectButton';
+import ProspectFollowUpList from '@/components/sales/ProspectFollowUpList';
 
 interface ProgramLink {
   community_program_id: number;
@@ -16,6 +17,7 @@ const DETAIL_FIELDS: { key: string; label: string }[] = [
   { key: 'whatsapp', label: 'Whatsapp' },
   { key: 'email', label: 'Email' },
   { key: 'source', label: 'Sumber Informasi' },
+  { key: 'contact_type', label: 'Jenis Kontak' },
   { key: 'interested_program', label: 'Tertarik Program Apa' },
   { key: 'year', label: 'Tahun' },
   { key: 'age', label: 'Usia' },
@@ -38,6 +40,12 @@ export default async function ProspectDetailPage({ params }: { params: { id: str
     .from('ProspectCommunityProgram')
     .select('community_program_id, CommunityProgram(id, community_name, category, event_date)')
     .eq('prospect_id', id);
+
+  const { data: followUps } = await supabase
+    .from('ProspectFollowUp')
+    .select('id, follow_up_date, detail')
+    .eq('prospect_id', id)
+    .order('follow_up_date');
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -85,6 +93,11 @@ export default async function ProspectDetailPage({ params }: { params: { id: str
               )}
             </div>
           </div>
+        </div>
+
+        <div className="mt-8">
+          <h2 className="text-sm font-black text-slate-700 uppercase tracking-widest mb-4">Riwayat Follow Up</h2>
+          <ProspectFollowUpList prospectId={prospect.id} initialFollowUps={followUps || []} />
         </div>
 
         <div className="mt-8">

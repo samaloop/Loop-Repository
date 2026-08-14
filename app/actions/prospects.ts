@@ -6,7 +6,7 @@ import { getAuthorizedSalesContext } from '@/lib/serverAuth';
 import { mapProspectExcelHeaderToKey, normalizeRing } from '@/lib/prospectFields';
 
 const PROSPECT_TEXT_FIELD_KEYS = [
-  'full_name', 'gender', 'company', 'job_title', 'whatsapp', 'email', 'source', 'ring',
+  'full_name', 'gender', 'company', 'job_title', 'whatsapp', 'email', 'source', 'ring', 'contact_type',
   'interested_program', 'domicile', 'industry_sector',
 ];
 

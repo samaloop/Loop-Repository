@@ -7,9 +7,10 @@ export default async function EditProspectPage({ params }: { params: { id: strin
   const { id } = await params;
   const { supabase } = await requireSalesAccess();
 
-  const [{ data: prospect }, { data: companies }] = await Promise.all([
+  const [{ data: prospect }, { data: companies }, { data: sectors }] = await Promise.all([
     supabase.from('Prospect').select('*').eq('id', id).single(),
     supabase.from('Company').select('id, company_name').order('company_name'),
+    supabase.from('IndustrySector').select('name').order('name'),
   ]);
   if (!prospect) notFound();
 
@@ -27,7 +28,13 @@ export default async function EditProspectPage({ params }: { params: { id: strin
         <h1 className="text-2xl md:text-3xl font-black text-slate-800 mb-8">Edit Calon Client</h1>
 
         <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-6 md:p-10">
-          <ProspectForm mode="edit" prospectId={prospect.id} defaultValues={prospect} companyOptions={companies || []} />
+          <ProspectForm
+            mode="edit"
+            prospectId={prospect.id}
+            defaultValues={prospect}
+            companyOptions={companies || []}
+            industrySectorOptions={(sectors || []).map((s) => s.name)}
+          />
         </div>
       </div>
     </div>

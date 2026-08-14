@@ -9,7 +9,10 @@ export default async function NewProspectPage({
 }) {
   const { supabase } = await requireSalesAccess();
   const { company_id } = await searchParams;
-  const { data: companies } = await supabase.from('Company').select('id, company_name').order('company_name');
+  const [{ data: companies }, { data: sectors }] = await Promise.all([
+    supabase.from('Company').select('id, company_name').order('company_name'),
+    supabase.from('IndustrySector').select('name').order('name'),
+  ]);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC]">
@@ -26,6 +29,7 @@ export default async function NewProspectPage({
           <ProspectForm
             mode="create"
             companyOptions={companies || []}
+            industrySectorOptions={(sectors || []).map((s) => s.name)}
             defaultCompanyId={company_id ? Number(company_id) : undefined}
           />
         </div>
