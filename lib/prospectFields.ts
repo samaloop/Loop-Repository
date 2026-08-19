@@ -23,7 +23,6 @@ export interface ProspectRecord {
   ring: string;
   contact_type: string | null;
   interested_program: string | null;
-  year: number | null;
   age: number | null;
   domicile: string | null;
   industry_sector: string | null;
@@ -73,7 +72,6 @@ const EXCEL_HEADER_MAP: Record<string, string> = {
   'leads/hunter': 'contact_type',
   'tertarik program apa': 'interested_program',
   'program yang ditawarkan': 'interested_program',
-  'tahun': 'year',
   'usia': 'age',
   'domisili': 'domicile',
   'sektor industri': 'industry_sector',

@@ -1,7 +1,7 @@
 'use client'
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowDown, ArrowUp, ArrowUpDown, X } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { deleteProspect } from '@/app/actions/prospects';
 import { RING_OPTIONS, CONTACT_TYPE_OPTIONS, ringBadgeClass, type ProspectRecord } from '@/lib/prospectFields';
 
@@ -10,8 +10,10 @@ interface ProspectTableProps {
 }
 
 type SortKey = 'full_name' | 'email' | 'company' | 'job_title' | 'source' | 'contact_type' | 'interested_program'
-  | 'domicile' | 'industry_sector' | 'age' | 'year' | 'ring' | 'created_at';
+  | 'domicile' | 'industry_sector' | 'age' | 'ring' | 'created_at';
 type SortDirection = 'asc' | 'desc';
+
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
 const SORT_COLUMNS: { key: SortKey; label: string; align?: 'center' }[] = [
   { key: 'full_name', label: 'Nama' },
@@ -24,7 +26,6 @@ const SORT_COLUMNS: { key: SortKey; label: string; align?: 'center' }[] = [
   { key: 'domicile', label: 'Domisili' },
   { key: 'industry_sector', label: 'Sektor Industri' },
   { key: 'age', label: 'Usia', align: 'center' },
-  { key: 'year', label: 'Tahun', align: 'center' },
   { key: 'ring', label: 'Kategori-Ring', align: 'center' },
   { key: 'created_at', label: 'Tanggal Dibuat', align: 'center' },
 ];
@@ -76,6 +77,8 @@ export default function ProspectTable({ initialProspects }: ProspectTableProps) 
   const [industrySectorFilter, setIndustrySectorFilter] = useState('');
   const [companyFilter, setCompanyFilter] = useState('');
   const [contactTypeFilter, setContactTypeFilter] = useState('');
+  const [pageSize, setPageSize] = useState(10);
+  const [page, setPage] = useState(1);
 
   const industrySectorOptions = useMemo(
     () => Array.from(new Set(prospects.map((p) => p.industry_sector).filter((v): v is string => !!v))).sort((a, b) => a.localeCompare(b, 'id')),
@@ -92,6 +95,7 @@ export default function ProspectTable({ initialProspects }: ProspectTableProps) 
     setIndustrySectorFilter('');
     setCompanyFilter('');
     setContactTypeFilter('');
+    setPage(1);
   };
 
   const handleSort = (key: SortKey) => {
@@ -101,6 +105,7 @@ export default function ProspectTable({ initialProspects }: ProspectTableProps) 
       setSortKey(key);
       setSortDirection('asc');
     }
+    setPage(1);
   };
 
   const filteredProspects = useMemo(() => {
@@ -135,6 +140,14 @@ export default function ProspectTable({ initialProspects }: ProspectTableProps) 
     return sortDirection === 'asc' ? sorted : sorted.reverse();
   }, [filteredProspects, sortKey, sortDirection]);
 
+  const totalItems = sortedProspects.length;
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedProspects = useMemo(
+    () => sortedProspects.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [sortedProspects, currentPage, pageSize]
+  );
+
   const handleDelete = async (id: number, name: string) => {
     if (!confirm(`Hapus calon client "${name}"? Tindakan ini tidak bisa dibatalkan.`)) return;
 
@@ -153,7 +166,7 @@ export default function ProspectTable({ initialProspects }: ProspectTableProps) 
           <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Kategori-Ring</label>
           <select
             value={ringFilter}
-            onChange={(e) => setRingFilter(e.target.value)}
+            onChange={(e) => { setRingFilter(e.target.value); setPage(1); }}
             className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-cyan-500 outline-none appearance-none font-medium text-sm"
           >
             <option value="">Semua Ring</option>
@@ -166,7 +179,7 @@ export default function ProspectTable({ initialProspects }: ProspectTableProps) 
           <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Sektor Industri</label>
           <select
             value={industrySectorFilter}
-            onChange={(e) => setIndustrySectorFilter(e.target.value)}
+            onChange={(e) => { setIndustrySectorFilter(e.target.value); setPage(1); }}
             className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-cyan-500 outline-none appearance-none font-medium text-sm"
           >
             <option value="">Semua Sektor</option>
@@ -179,7 +192,7 @@ export default function ProspectTable({ initialProspects }: ProspectTableProps) 
           <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Perusahaan/Organisasi</label>
           <select
             value={companyFilter}
-            onChange={(e) => setCompanyFilter(e.target.value)}
+            onChange={(e) => { setCompanyFilter(e.target.value); setPage(1); }}
             className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-cyan-500 outline-none appearance-none font-medium text-sm"
           >
             <option value="">Semua Perusahaan</option>
@@ -192,7 +205,7 @@ export default function ProspectTable({ initialProspects }: ProspectTableProps) 
           <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Jenis Kontak</label>
           <select
             value={contactTypeFilter}
-            onChange={(e) => setContactTypeFilter(e.target.value)}
+            onChange={(e) => { setContactTypeFilter(e.target.value); setPage(1); }}
             className="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-cyan-500 outline-none appearance-none font-medium text-sm"
           >
             <option value="">Semua Jenis</option>
@@ -231,8 +244,8 @@ export default function ProspectTable({ initialProspects }: ProspectTableProps) 
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {sortedProspects.length > 0 ? (
-                sortedProspects.map((prospect) => (
+              {paginatedProspects.length > 0 ? (
+                paginatedProspects.map((prospect) => (
                   <tr key={prospect.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="p-6 whitespace-nowrap">
                       <p className="font-bold text-slate-700">{prospect.full_name}</p>
@@ -250,7 +263,6 @@ export default function ProspectTable({ initialProspects }: ProspectTableProps) 
                     <td className="p-6 text-slate-600 text-sm whitespace-nowrap">{prospect.domicile || '-'}</td>
                     <td className="p-6 text-slate-600 text-sm whitespace-nowrap">{prospect.industry_sector || '-'}</td>
                     <td className="p-6 text-slate-600 text-sm text-center whitespace-nowrap">{prospect.age ?? '-'}</td>
-                    <td className="p-6 text-slate-600 text-sm text-center whitespace-nowrap">{prospect.year ?? '-'}</td>
                     <td className="p-6 text-center whitespace-nowrap">
                       <RingBadge ring={prospect.ring} />
                     </td>
@@ -265,7 +277,7 @@ export default function ProspectTable({ initialProspects }: ProspectTableProps) 
                   </tr>
                 ))
               ) : (
-                <tr><td colSpan={14} className="p-20 text-center text-slate-400 italic">{hasActiveFilter ? 'Tidak ada calon client yang cocok dengan filter.' : 'Belum ada calon client.'}</td></tr>
+                <tr><td colSpan={13} className="p-20 text-center text-slate-400 italic">{hasActiveFilter ? 'Tidak ada calon client yang cocok dengan filter.' : 'Belum ada calon client.'}</td></tr>
               )}
             </tbody>
           </table>
@@ -273,10 +285,10 @@ export default function ProspectTable({ initialProspects }: ProspectTableProps) 
       </div>
 
       <div className="md:hidden space-y-4">
-        {sortedProspects.length === 0 && (
+        {paginatedProspects.length === 0 && (
           <p className="p-10 text-center text-slate-400 italic">{hasActiveFilter ? 'Tidak ada calon client yang cocok dengan filter.' : 'Belum ada calon client.'}</p>
         )}
-        {sortedProspects.map((prospect) => (
+        {paginatedProspects.map((prospect) => (
           <div key={prospect.id} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
             <div className="flex justify-between items-start mb-3">
               <RingBadge ring={prospect.ring} />
@@ -292,12 +304,50 @@ export default function ProspectTable({ initialProspects }: ProspectTableProps) 
             <p className="text-xs text-slate-400 mt-1">{prospect.email || '-'} &middot; {prospect.whatsapp || '-'}</p>
             <p className="text-xs text-slate-500 mt-1">{prospect.interested_program || '-'}</p>
             <p className="text-xs text-slate-400 mt-1">{prospect.domicile || '-'} &middot; {prospect.industry_sector || '-'}</p>
-            <p className="text-xs text-slate-400 mt-1">Usia {prospect.age ?? '-'} &middot; Tahun {prospect.year ?? '-'} &middot; Sumber: {prospect.source || '-'}</p>
+            <p className="text-xs text-slate-400 mt-1">Usia {prospect.age ?? '-'} &middot; Sumber: {prospect.source || '-'}</p>
             <p className="text-xs text-slate-400 mt-1">Jenis Kontak: {prospect.contact_type || '-'}</p>
             <p className="text-xs text-slate-400 mt-1">Dibuat: {formatDate(prospect.created_at)}</p>
           </div>
         ))}
       </div>
+
+      {totalItems > 0 && (
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-sm text-slate-500">
+            <span>Tampilkan</span>
+            <select
+              value={pageSize}
+              onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+              className="px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl focus:ring-2 focus:ring-cyan-500 outline-none appearance-none font-bold text-sm"
+            >
+              {PAGE_SIZE_OPTIONS.map((size) => (
+                <option key={size} value={size}>{size}</option>
+              ))}
+            </select>
+            <span>per halaman &middot; {totalItems} calon client</span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+              className="flex items-center gap-1 px-4 py-2 border border-slate-100 text-slate-500 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all disabled:opacity-40 disabled:hover:bg-white"
+            >
+              <ChevronLeft size={16} /> Sebelumnya
+            </button>
+            <span className="text-sm font-bold text-slate-600">Halaman {currentPage} / {totalPages}</span>
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+              className="flex items-center gap-1 px-4 py-2 border border-slate-100 text-slate-500 rounded-xl font-bold text-sm hover:bg-slate-50 transition-all disabled:opacity-40 disabled:hover:bg-white"
+            >
+              Selanjutnya <ChevronRight size={16} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

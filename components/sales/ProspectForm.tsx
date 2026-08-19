@@ -128,10 +128,6 @@ export default function ProspectForm({ mode, prospectId, defaultValues, defaultC
           <input type="text" name="interested_program" defaultValue={defaultValues?.interested_program || ''} className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-cyan-500 outline-none font-medium" />
         </div>
         <div>
-          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Tahun</label>
-          <input type="number" name="year" defaultValue={defaultValues?.year ?? ''} className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-cyan-500 outline-none font-medium" />
-        </div>
-        <div>
           <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 px-1">Usia</label>
           <input type="number" name="age" min={0} defaultValue={defaultValues?.age ?? ''} className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-cyan-500 outline-none font-medium" />
         </div>

@@ -3,7 +3,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Upload, Plus, Settings } from 'lucide-react';
 import ExcelUploadModal from './ExcelUploadModal';
-import { importProspectsFromExcel } from '@/app/actions/prospects';
+import DownloadTemplateButton from './DownloadTemplateButton';
+import { importProspectsFromExcel, downloadProspectTemplate } from '@/app/actions/prospects';
 
 export default function ProspectsToolbar() {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
@@ -17,6 +18,7 @@ export default function ProspectsToolbar() {
         >
           <Settings size={16} /> Kelola Sektor Industri
         </Link>
+        <DownloadTemplateButton action={downloadProspectTemplate} />
         <button
           onClick={() => setIsUploadOpen(true)}
           className="flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 px-6 py-3.5 rounded-2xl font-bold text-sm hover:bg-slate-50 transition-all"

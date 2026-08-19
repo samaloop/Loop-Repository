@@ -99,6 +99,7 @@ const EXCEL_HEADER_MAP: Record<string, string> = {
   'jenis kelamin': 'gender',
   'perusahaan': 'company',
   'peran jabatan': 'job_title',
+  'peran / jabatan': 'job_title',
   'alamat perusahaan': 'company_address',
   'latar belakang pendidikan': 'education_background',
   'program sertifikasi': 'certification_program',

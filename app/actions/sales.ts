@@ -2,9 +2,10 @@
 
 import * as XLSX from 'xlsx';
 import { revalidatePath } from 'next/cache';
-import { CLIENT_FIELDS, PAYMENT_STATUS_OPTIONS, mapExcelHeaderToKey } from '@/lib/clientFields';
+import { CLIENT_FIELDS, PAYMENT_STATUS_OPTIONS, GENDER_OPTIONS, mapExcelHeaderToKey } from '@/lib/clientFields';
 import { getAuthorizedSalesContext as getAuthorizedContext } from '@/lib/serverAuth';
 import { parseDateValue } from '@/lib/dateUtils';
+import { buildExcelTemplateBase64 } from '@/lib/excelTemplate';
 
 function extractClientData(formData: FormData) {
   const data: Record<string, string | number | null> = {};
@@ -158,4 +159,46 @@ export async function importClientsFromExcel(formData: FormData): Promise<Import
   revalidatePath('/sales/clients');
   revalidatePath('/sales');
   return { success: true, insertedCount: count ?? records.length, skippedCount, errors };
+}
+
+interface TemplateResult {
+  success: boolean;
+  base64?: string;
+  filename?: string;
+  error?: string;
+}
+
+export async function downloadClientTemplate(): Promise<TemplateResult> {
+  const { authorized } = await getAuthorizedContext();
+  if (!authorized) return { success: false, error: 'Tidak memiliki akses.' };
+
+  const headers = CLIENT_FIELDS.map((f) => f.label);
+  const exampleRow: Record<string, string> = {
+    'Nama Lengkap': 'CONTOH - Hapus baris ini sebelum upload',
+    'Nama Panggilan': 'Contoh',
+    'Jenis Kelamin': GENDER_OPTIONS[0],
+    'Tanggal Lahir': '01/01/1990',
+    'Alamat Rumah': 'Jl. Contoh No. 1, Jakarta',
+    'Nomor Telepon': '081200000000',
+    'Nomor WhatsApp': '081200000000',
+    'Alamat Email': 'contoh@email.com',
+    'Alternatif Email': '',
+    'Latar Belakang Pendidikan': 'S1 Psikologi',
+    'Perusahaan': 'PT Contoh Sejahtera',
+    'Peran / Jabatan': 'HR Manager',
+    'Alamat Perusahaan': 'Jl. Contoh Perusahaan No. 1, Jakarta',
+    'Status Pembayaran': PAYMENT_STATUS_OPTIONS[0],
+    'Program Sertifikasi': 'LCPC Batch 74',
+    'Program Training': '',
+    'Nama yang Diinginkan dalam Sertifikat': 'Contoh Nama',
+    'International Coaching Federation': '',
+    'Ukuran T-Shirt': 'L',
+    'Tulis 3 Hal Mengenai Anda (maks. 200 kata)': '',
+    'Harapan Mengikuti Program': '',
+    'Akun Media Sosial': '',
+    'Mengetahui tentang Loop Institute of Coaching dari': '',
+  };
+
+  const base64 = buildExcelTemplateBase64(headers, exampleRow);
+  return { success: true, base64, filename: 'Template_Data_Peserta.xlsx' };
 }

@@ -19,7 +19,6 @@ const DETAIL_FIELDS: { key: string; label: string }[] = [
   { key: 'source', label: 'Sumber Informasi' },
   { key: 'contact_type', label: 'Jenis Kontak' },
   { key: 'interested_program', label: 'Tertarik Program Apa' },
-  { key: 'year', label: 'Tahun' },
   { key: 'age', label: 'Usia' },
   { key: 'domicile', label: 'Domisili' },
   { key: 'industry_sector', label: 'Sektor Industri' },

@@ -3,7 +3,8 @@
 import * as XLSX from 'xlsx';
 import { revalidatePath } from 'next/cache';
 import { getAuthorizedSalesContext } from '@/lib/serverAuth';
-import { mapProspectExcelHeaderToKey, normalizeRing } from '@/lib/prospectFields';
+import { mapProspectExcelHeaderToKey, normalizeRing, RING_OPTIONS, CONTACT_TYPE_OPTIONS } from '@/lib/prospectFields';
+import { buildExcelTemplateBase64 } from '@/lib/excelTemplate';
 
 const PROSPECT_TEXT_FIELD_KEYS = [
   'full_name', 'gender', 'company', 'job_title', 'whatsapp', 'email', 'source', 'ring', 'contact_type',
@@ -21,9 +22,6 @@ function extractProspectData(formData: FormData) {
 
   const companyIdRaw = (formData.get('company_id') as string || '').trim();
   data.company_id = companyIdRaw === '' ? null : Number(companyIdRaw);
-
-  const yearRaw = (formData.get('year') as string || '').trim();
-  data.year = yearRaw === '' ? null : Number(yearRaw);
 
   const ageRaw = (formData.get('age') as string || '').trim();
   data.age = ageRaw === '' ? null : Number(ageRaw);
@@ -115,7 +113,7 @@ async function parseProspectExcelFile(file: File): Promise<{ records: Record<str
       const raw = row[header];
       const value = typeof raw === 'string' ? raw.trim() : String(raw ?? '').trim();
 
-      if (key === 'year' || key === 'age') {
+      if (key === 'age') {
         record[key] = value === '' ? null : Number(value);
         continue;
       }
@@ -204,4 +202,42 @@ export async function importProspectsForProgram(programId: number, formData: For
   revalidatePath('/sales/prospects');
   revalidatePath(`/sales/community-programs/${programId}`);
   return { success: true, insertedCount: inserted?.length ?? records.length, skippedCount, errors };
+}
+
+interface TemplateResult {
+  success: boolean;
+  base64?: string;
+  filename?: string;
+  error?: string;
+}
+
+const PROSPECT_TEMPLATE_HEADERS = [
+  'Nama Lengkap', 'Jenis Kelamin', 'Usia', 'Domisili', 'Jabatan',
+  'Perusahaan/Organisasi', 'Sektor Industri', 'Whatsapp', 'Email',
+  'Kategori Prospek', 'Jenis Kontak', 'Program yang ditawarkan',
+];
+
+// Format sama dipakai baik untuk import umum (importProspectsFromExcel) maupun
+// upload peserta langsung dari halaman detail Program Komunitas (importProspectsForProgram).
+export async function downloadProspectTemplate(): Promise<TemplateResult> {
+  const { authorized } = await getAuthorizedSalesContext();
+  if (!authorized) return { success: false, error: 'Tidak memiliki akses.' };
+
+  const exampleRow: Record<string, string> = {
+    'Nama Lengkap': 'CONTOH - Hapus baris ini sebelum upload',
+    'Jenis Kelamin': 'Laki-laki',
+    'Usia': '35',
+    'Domisili': 'Jakarta Selatan',
+    'Jabatan': 'HR Manager',
+    'Perusahaan/Organisasi': 'PT Contoh Sejahtera',
+    'Sektor Industri': 'Manufaktur',
+    'Whatsapp': '081200000000',
+    'Email': 'contoh@email.com',
+    'Kategori Prospek': RING_OPTIONS[0],
+    'Jenis Kontak': CONTACT_TYPE_OPTIONS[0],
+    'Program yang ditawarkan': 'LCPC Batch 74',
+  };
+
+  const base64 = buildExcelTemplateBase64(PROSPECT_TEMPLATE_HEADERS, exampleRow);
+  return { success: true, base64, filename: 'Template_Calon_Client.xlsx' };
 }
